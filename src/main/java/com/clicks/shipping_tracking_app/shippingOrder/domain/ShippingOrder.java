@@ -41,9 +41,14 @@ class ShippingOrder {
                 this.reference,
                 this.status.toString().toLowerCase(),
                 new ShippingOrderDto.ShippingLocationDto(
-                        this.location.address(),
-                        this.location.arrivedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy H:m:s")))
+                        this.location.getAddress(),
+                        this.location.getArrivedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy H:m:s")))
         );
+    }
+
+    public void UpdateLocation(String address) {
+        this.location.setAddress(address);
+        this.location.setArrivedAt(LocalDateTime.now());
     }
 
 }
