@@ -2,16 +2,14 @@ package com.clicks.shipping_tracking_app.user.domain;
 
 import com.clicks.shipping_tracking_app.user.UserDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Getter
+@Builder
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor

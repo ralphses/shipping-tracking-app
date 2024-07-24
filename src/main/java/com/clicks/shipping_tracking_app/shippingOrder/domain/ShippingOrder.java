@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -29,21 +30,38 @@ class ShippingOrder {
     private String sender;
     private String receiver;
     private String description;
+    private String destination;
 
     @Embedded
     private ShippingLocation location;
 
     public ShippingOrderDto dto() {
-        return new ShippingOrderDto(
-                this.sender,
-                this.receiver,
-                this.description,
-                this.reference,
-                this.status.toString().toLowerCase(),
-                new ShippingOrderDto.ShippingLocationDto(
-                        this.location.getAddress(),
-                        this.location.getArrivedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy H:m:s")))
-        );
+        if (this.location == null) {
+            return new ShippingOrderDto(
+                    this.sender,
+                    this.receiver,
+                    this.description,
+                    this.reference,
+                    this.destination,
+                    Objects.nonNull(this.status) ? this.status.toString().toLowerCase() : "initiated",
+                    new ShippingOrderDto.ShippingLocationDto(
+                            "",
+                            "")
+            );
+        }
+        else {
+            return new ShippingOrderDto(
+                    this.sender,
+                    this.receiver,
+                    this.description,
+                    this.reference,
+                    this.destination,
+                    this.status.toString().toLowerCase(),
+                    new ShippingOrderDto.ShippingLocationDto(
+                            this.location.getAddress(),
+                            this.location.getArrivedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy H:m:s")))
+            );
+        }
     }
 
     public void UpdateLocation(String address) {

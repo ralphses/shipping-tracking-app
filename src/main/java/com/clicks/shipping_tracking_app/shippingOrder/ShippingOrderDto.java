@@ -5,6 +5,7 @@ public record ShippingOrderDto(
         String receiver,
         String description,
         String reference,
+        String destination,
         String status,
         ShippingLocationDto location
 ) {

@@ -2,6 +2,7 @@ package com.clicks.shipping_tracking_app.shippingOrder.domain;
 
 import com.clicks.shipping_tracking_app.infrastructure.exceptions.InvalidParamsException;
 import com.clicks.shipping_tracking_app.infrastructure.exceptions.ResourceNotFoundException;
+import com.clicks.shipping_tracking_app.shippingOrder.AllSippingOrders;
 import com.clicks.shipping_tracking_app.shippingOrder.ShippingOrderDto;
 import com.clicks.shipping_tracking_app.shippingOrder.ShippingOrderPayload;
 import com.clicks.shipping_tracking_app.shippingOrder.ShippingOrderService;
@@ -9,10 +10,15 @@ import com.clicks.shipping_tracking_app.user.UserDto;
 import com.clicks.shipping_tracking_app.user.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Implementation of the ShippingOrderService interface.
@@ -34,7 +40,7 @@ class ShippingOrderServiceImp implements ShippingOrderService {
      * @throws InvalidParamsException if the sender or receiver is invalid
      */
     @Override
-    public ShippingOrderDto register(ShippingOrderPayload shippingOrderPayload) {
+    public String register(ShippingOrderPayload shippingOrderPayload) {
 
         // Verify both sender and receiver
         boolean isSenderValid = userService.verifyUser(shippingOrderPayload.sender());
@@ -45,10 +51,14 @@ class ShippingOrderServiceImp implements ShippingOrderService {
                     .description(shippingOrderPayload.description())
                     .sender(shippingOrderPayload.sender())
                     .receiver(shippingOrderPayload.receiver())
+                    .reference(UUID.randomUUID().toString())
+                    .status(ShippingOrderStatus.INITIATED)
+                    .timestamp(LocalDateTime.now())
+                    .destination(shippingOrderPayload.destination())
                     .build();
 
-            // Save the shipping order and return its DTO representation
-            return shippingOrderRepository.save(shippingOrder).dto();
+            // Save the shipping order and return its ID
+            return shippingOrderRepository.save(shippingOrder).getReference();
         }
 
         // Throw exception if sender or receiver is invalid
@@ -114,24 +124,30 @@ class ShippingOrderServiceImp implements ShippingOrderService {
      * Retrieves a list of shipping orders for a user based on their role (sender or receiver).
      *
      * @param userReference the user's reference
-     * @param userType the type of user (sender or receiver)
+     * @param userType      the type of user (sender or receiver)
      * @return a list of ShippingOrderDto
      * @throws InvalidParamsException if the user type is invalid
      */
     @Override
-    public List<ShippingOrderDto> getShippingOrders(String userReference, String userType) {
+    public AllSippingOrders getShippingOrders(String userReference, String userType, int page) {
+
+        Pageable pa = PageRequest.of(page - 1, 10);
 
         // Retrieve orders based on user type
-        List<ShippingOrder> orders = switch (userType) {
-            case "receiver" -> shippingOrderRepository.findByReferenceAndReceiver(userReference, userType);
-            case "sender" -> shippingOrderRepository.findByReferenceAndSender(userReference, userType);
+        Page<ShippingOrder> orders = switch (userType) {
+            case "receiver" -> shippingOrderRepository.findByReferenceAndReceiver(pa, userReference, userType);
+            case "sender" -> shippingOrderRepository.findByReferenceAndSender(pa, userReference, userType);
+            case "all" -> shippingOrderRepository.findUserOrders(pa, userReference);
             default -> throw new InvalidParamsException("Invalid user type");
         };
 
         // Convert orders to DTOs
-        return orders.stream()
-                .map(ShippingOrder::dto)
-                .toList();
+        return new AllSippingOrders(
+                orders.getTotalPages(),
+                orders.getTotalElements(),
+                orders.getContent().stream()
+                        .map(ShippingOrder::dto)
+                        .toList());
     }
 
     /**
