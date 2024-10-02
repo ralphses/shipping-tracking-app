@@ -35,14 +35,21 @@ export default function ViewShippingOrdersPage() {
         try {
             const data = await fetchOrders(email, page);
             console.log(data);
-            setOrders(data.data.orders);
-            setTotalPages(data.data.noOfPages);
+
+            if (data.data.orders.length === 0) {
+                setModalContent("No orders found for this user.");
+                setModalOpen(true);
+            } else {
+                setOrders(data.data.orders);
+                setTotalPages(data.data.noOfPages);
+            }
         } catch (error) {
             setError(error.message);
             setModalContent("An error occurred while fetching orders.");
             setModalOpen(true);
         }
     };
+
 
     const handleViewOrder = (order) => {
         setModalContent(`

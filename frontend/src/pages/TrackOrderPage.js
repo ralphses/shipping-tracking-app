@@ -4,13 +4,18 @@ import 'tailwindcss/tailwind.css';
 
 const fetchOrder = async (orderId) => {
     try {
-        const response = await fetch(`http://localhost:8080/api/v1/shipping-order/${orderId}`); // Replace with your actual API endpoint
+        const response = await fetch(`http://localhost:8080/api/v1/shipping-order/${orderId}`);
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || "Failed to fetch order");
         }
-        return await response.json();
+
+        const responseData = await response.json();
+        return responseData.data; // Return the 'data' field from the API response
     } catch (error) {
+        // console.log(error);
+
         throw new Error(error.message);
     }
 };
@@ -30,7 +35,7 @@ export default function TrackOrderPage() {
 
         try {
             const orderData = await fetchOrder(orderId);
-            setOrder(orderData.data);
+            setOrder(orderData);
             setModalType("success");
         } catch (error) {
             setError(error.message);
